@@ -1,0 +1,26 @@
+FROM ruby:2.7
+
+ARG USER_ID=10001
+ARG GROUP_ID=10001
+
+# Non-root user for security purposes.
+#
+# UIDs below 10,000 are a security risk, as a container breakout could result
+# in the container being ran as a more privileged user on the host kernel with
+# the same UID.
+#
+# Static GID/UID is also useful for chown'ing files outside the container where
+# such a user does not exist.
+
+RUN addgroup --gid $GROUP_ID user
+RUN adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID user
+
+ENV INSTALL_PATH /opt/app
+RUN mkdir -p $INSTALL_PATH
+
+RUN gem install rails bundler
+RUN chown -R user:user /opt/app
+WORKDIR /opt/app
+
+USER $USER_ID
+CMD ["/bin/sh"]

@@ -1,0 +1,41 @@
+version: "3.7"
+
+services:
+  postgres:
+    image: postgres:12.1
+    environment:
+      POSTGRES_USER: sandbox #DockerHub postgres docs state this is optional but must be used when password is set.  It will also create a db under the supplied username which you'll use to connect to in rails console such as: $docker-compose exec postgres psql -U YourUserNameHere
+      POSTGRES_PASSWORD: test_db_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+  sandbox:
+    build:
+      context: .
+      args:
+        USER_ID: "${USER_ID:-10001}"
+        GROUP_ID: "${GROUP_ID:-10001}"
+    depends_on:
+      - postgres
+    volumes:
+      - type: bind
+        source: ./sandbox
+        target: /opt/app/sandbox
+    ports:
+      - "8010:8010"
+    env_file:
+      - .env
+
+  nginx:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.nginx
+    depends_on:
+      - postgres
+    ports:
+      - "8020:8020"
+
+volumes:
+  postgres:
